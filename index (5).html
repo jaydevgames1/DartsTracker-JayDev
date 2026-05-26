@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <title>Darts Tracker</title>
+  <style>
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: #111;
+      color: white;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 5px;
+    }
+
+    /* Dartboard */
+    .dartboard-wrapper {
+      display: flex;
+      justify-content: center;
+      margin: 15px 0 30px;
+      position: relative;
+    }
+
+    .dartboard {
+      display: none;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at center, red 10%, white 11% 25%, green 26% 40%, black 41%);
+      border: 6px solid #333;
+      position: relative;
+    }
+
+    .dart {
+      width: 6px;
+      height: 70px;
+      background: silver;
+      position: absolute;
+      top: -20px;
+      right: 50px;
+      transform: rotate(45deg);
+      border-radius: 4px;
+    }
+
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 50px;
+      flex-wrap: wrap;
+      min-height: 80vh;
+    }
+
+    .player {
+      display: flex;
+      flex-direction: column;
+
+      width: 450px;
+      height: 550px;
+      background: #1b1b1b;
+      padding: 15px;
+      border-radius: 14px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.7);
+    }
+
+    .actions {
+      
+      margin-top: auto;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    #turnArrow {
+      fill: #ff4444; /* default Player A (red) */
+      transition: 0.3s ease;
+    }
+
+
+
+    .player input {
+      background: transparent;
+      border: none;
+      text-align: center;
+      color: white;
+      font-size: 22px;
+      font-weight: bold;
+      margin: 10px 0;
+      width: 90%;
+      border-bottom: 2px dashed #555;
+      cursor: text;
+
+    }
+
+    #settingsPanel {
+  position: fixed;
+  top: 60px;
+  left: 20px;
+  width: 260px;
+  background: #1b1b1b;
+  padding: 15px;
+  border-radius: 12px;
+  display: none;
+  box-shadow: 0 0 20px rgba(0,0,0,0.8);
+  z-index: 1000;
+}
+
+#settingsPanel h2 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+.mode-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0 15px;
+}
+
+.mode-options label {
+  cursor: pointer;
+}
+
+
+    .score {
+      font-size: 70px;
+      font-weight: bold;
+      margin: 15px 0;
+    }
+
+    .red { color: #ff4444; }
+    .green { color: #00ff99; }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    button {
+  padding: 10px;
+  font-size: 15px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: #2e2e2e;
+  color: white;
+  font-family: 'Montserrat', sans-serif;   /* ← ADD THIS */
+  font-weight: 500;
+}
+
+
+    button:hover {
+      background: #444;
+    }
+
+    .confirm {
+      
+      background: #0066ff;
+      grid-column: span 5;
+      font-weight: bold;
+    }
+
+    .confirm:hover {
+      background: #0099ff;
+    }
+
+    .mult {
+      background: #555;
+    }
+
+    .special-score {
+  background: #333;
+  font-weight: bold;
+}
+
+
+#toggles {
+  position: fixed;
+  top: 15px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;   /* vertical */
+  gap: 8px;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+
+.container.board-mode {
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+
+.container.board-mode .player {
+  width: 260px;
+  height: 280px;   /* 500 - ~180px = 320 */
+}
+
+
+.container.board-mode .buttons {
+  display: none !important;
+}
+
+
+#toggles label {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+
+
+.settings-gear {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: 0.2s ease;
+}
+
+.settings-gear svg {
+  fill: white;
+}
+
+.settings-gear:hover {
+  transform: rotate(30deg) scale(1.1);
+  opacity: 1;
+}
+
+.special-score:nth-child(24) { grid-column: 2; } /* 0 */
+.special-score:nth-child(25) { grid-column: 3; } /* Bull */
+.special-score:nth-child(26) { grid-column: 4; } /* Bullseye */
+
+
+    .selected {
+      background: orange !important;
+      color: black;
+    }
+
+    .current {
+      font-size: 18px;
+      opacity: 0.8;
+      margin-bottom: 5px;
+    }
+
+    .mult:nth-child(21) { grid-column: 2; } /* x1 */
+    .mult:nth-child(22) { grid-column: 3; } /* x2 */
+    .mult:nth-child(23) { grid-column: 4; } /* x3 */
+
+
+#winOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.top-bar {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center; /* centers horizontally */
+  align-items: center;     /* vertical alignment with gear */
+  gap: 10px;               /* space between gear and label */
+  margin-bottom: 10px;     /* spacing from top content */
+}
+
+#modeLabel {
+  font-size: 14px;
+  white-space: nowrap;     /* keep in one line */
+  color: white;
+  opacity: 0.8;
+  pointer-events: none;    /* optional: ignore clicks */
+}
+
+
+
+
+#winBox {
+  background: #000;
+  padding: 40px 50px;
+  border-radius: 20px;
+  text-align: center;
+  border: 4px solid red; /* Will change dynamically */
+  box-shadow: 0 0 30px black;
+  min-width: 260px;
+}
+
+
+#dartboard-container {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+body.board-mode #dartboard-container {
+  display: flex;
+}
+
+
+#dartboard {
+  background: transparent;
+}
+
+#selectedOutput {
+  margin-top: 10px;
+  font-size: 22px;
+  color: white;
+}
+
+#winBox h2 {
+  margin: 0 0 20px;
+  font-size: 28px;
+  letter-spacing: 1px;
+}
+
+#winBox button {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  background: #222;
+  color: white;
+  font-weight: bold;
+}
+
+#winBox button:hover {
+  background: #333;
+}
+
+footer {
+  position: fixed;
+  bottom: 10px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 13px;
+  color: #777;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+}
+
+
+  </style>
+</head>
+<body>
+
+
+  
+
+
+  
+  
+
+
+</div>
+
+
+
+
+
+  <div class="settings-gear" onclick="openSettings()">
+  <svg width="28" height="28" viewBox="0 0 24 24">
+    <path d="M19.14,12.94a7.43,7.43,0,0,0,.05-.94,7.43,7.43,0,0,0-.05-.94l2.11-1.65a.48.48,0,0,0,.12-.61l-2-3.46a.5.5,0,0,0-.6-.22l-2.49,1a7.31,7.31,0,0,0-1.63-.94l-.38-2.65A.49.49,0,0,0,13.76,2H10.24a.49.49,0,0,0-.48.41L9.38,5.06a7.31,7.31,0,0,0-1.63.94l-2.49-1a.5.5,0,0,0-.6.22L2.67,8.68a.48.48,0,0,0,.12.61L4.9,10.94a7.43,7.43,0,0,0-.05.94,7.43,7.43,0,0,0,.05.94L2.79,14.47a.48.48,0,0,0-.12.61l2,3.46a.5.5,0,0,0,.6.22l2.49-1a7.31,7.31,0,0,0,1.63.94l.38,2.65a.49.49,0,0,0,.48.41h3.52a.49.49,0,0,0,.48-.41l.38-2.65a7.31,7.31,0,0,0,1.63-.94l2.49,1a.5.5,0,0,0,.6-.22l2-3.46a.48.48,0,0,0-.12-.61ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/>
+  </svg>
+
+  
+
+</div>
+
+<div id="modeLabel">Mode: Not selected</div>
+
+
+<div id="settingsPanel">
+  <h2>Game Mode</h2>
+
+  <div class="mode-options">
+    <label><input type="radio" name="mode" value="none" checked> No game</label>
+    <label><input type="radio" name="mode" value="101"> 101</label>
+    <label><input type="radio" name="mode" value="301"> 301</label>
+    <label><input type="radio" name="mode" value="501"> 501</label>
+
+    <label><input type="radio" name="mode" value="f100"> First to 100</label>
+    <label><input type="radio" name="mode" value="f200"> First to 200</label>
+    <label><input type="radio" name="mode" value="f500"> First to 500</label>
+  </div>
+
+  <button onclick="applyGameMode()">Apply</button>
+</div>
+
+
+
+
+    
+  <h1>Darts Tracker</h1>
+
+  <div id="dartboard-container">
+  <svg id="dartboard" width="420" height="420" viewBox="0 0 420 420"></svg>
+
+  <div id="selectedOutput">
+    Selected: <span id="selectedValue">0</span>
+  </div>
+</div>
+
+
+  <div class="container">
+
+    <!-- PLAYER A -->
+    <div class="player">
+      <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+  <input value="Player A">
+  <svg width="22" height="22" viewBox="0 0 24 24" style="transform: rotate(-25deg); fill:#aaa;">
+    <path d="M3 17.25V21h3.75l11.02-11.03-3.75-3.75L3 17.25zm17.71-10.04c.39-.39.39-1.03 0-1.42l-2.5-2.5a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.99-1.66z"/>
+  </svg>
+</div>
+
+
+      <div class="score red" id="scoreA">0</div>
+      <div class="current" id="currentA">- | Turns: 0</div>
+
+      <div class="buttons" id="buttonsA"></div>
+      <div class="actions">
+        <button class="confirm" onclick="confirmScore('A')">Confirm</button>
+        <button class="confirm" style="background:#ff4444;" onclick="undoScore('A')">Undo</button>
+      </div>
+
+
+    </div>
+
+    <svg id="turnArrow" width="60" height="60" viewBox="0 0 24 24">
+      <path d="M8 5l8 7-8 7V5z" />
+    </svg>
+
+
+    <!-- PLAYER B -->
+    <div class="player">
+      <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+  <input value="Player B">
+  <svg width="22" height="22" viewBox="0 0 24 24" style="transform: rotate(-25deg); fill:#aaa;">
+    <path d="M3 17.25V21h3.75l11.02-11.03-3.75-3.75L3 17.25zm17.71-10.04c.39-.39.39-1.03 0-1.42l-2.5-2.5a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.99-1.66z"/>
+  </svg>
+</div>
+
+
+      <div class="score green" id="scoreB">0</div>
+      <div class="current" id="currentB">- | Turns: 0</div>
+
+      <div class="buttons" id="buttonsB"></div>
+      <div class="actions">
+        <button class="confirm" onclick="confirmScore('B')">Confirm</button>
+        <button class="confirm" style="background:#ff4444;" onclick="undoScore('B')">Undo</button>
+</div>
+
+
+    </div>
+
+  </div>
+
+
+  <div id="winOverlay">
+  <div id="winBox">
+    <h2 id="winText">Player A wins</h2>
+    <button onclick="closeWin()">Close</button>
+  </div>
+</div>
+
+
+
+
+  <script>
+
+    let gameMode = "none";  // none, x01, first
+    let targetScore = 0;    // 101, 301, 501, 100, 200, 500
+
+    const players = {
+      A: { score: 0, selected: null, multiplier: 1, history: [], turns: 0 },
+      B: { score: 0, selected: null, multiplier: 1, history: [], turns: 0 }
+
+    };
+
+    function createButtons(player) {
+      const container = document.getElementById("buttons" + player);
+
+      for(let i = 1; i <= 20; i++) {
+        let btn = document.createElement("button");
+        btn.innerText = i;
+        btn.onclick = () => selectNumber(player, i, btn);
+        container.appendChild(btn);
+      }
+      
+      let x1 = document.createElement("button");
+      x1.innerText = "x1";
+      x1.classList.add("mult");
+      x1.onclick = () => setMultiplier(player, 1, x1);
+      container.appendChild(x1);
+
+
+      let x2 = document.createElement("button");
+      x2.innerText = "x2";
+      x2.classList.add("mult");
+      x2.onclick = () => setMultiplier(player, 2, x2);
+      container.appendChild(x2);
+
+      let x3 = document.createElement("button");
+      x3.innerText = "x3";
+      x3.classList.add("mult");
+      x3.onclick = () => setMultiplier(player, 3, x3);
+      container.appendChild(x3);
+
+
+      // --- SPECIAL SCORES ---
+let zero = document.createElement("button");
+zero.innerText = "0";
+zero.classList.add("special-score");
+zero.onclick = () => selectNumber(player, 0, zero);
+container.appendChild(zero);
+
+let bull = document.createElement("button");
+bull.innerText = "Bull";
+bull.classList.add("special-score");
+bull.onclick = () => selectNumber(player, 25, bull);
+container.appendChild(bull);
+
+let bullseye = document.createElement("button");
+bullseye.innerText = "Bullseye";
+bullseye.classList.add("special-score");
+bullseye.onclick = () => selectNumber(player, 50, bullseye);
+container.appendChild(bullseye);
+
+    }
+
+    function selectNumber(player, value, btn) {
+      players[player].selected = value;
+
+      const buttons = document
+        .getElementById("buttons" + player)
+        .querySelectorAll("button");
+
+      buttons.forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+
+      updateDisplay(player);
+    }
+
+    function setMultiplier(player, value, btn) {
+  const p = players[player];
+  p.multiplier = value;
+
+  const buttons = document
+    .getElementById("buttons" + player)
+    .querySelectorAll(".mult");
+
+  buttons.forEach(b => b.classList.remove("selected"));
+  btn.classList.add("selected");
+
+  updateDisplay(player);
+}
+
+
+
+function updateArrow() {
+  const arrow = document.getElementById("turnArrow");
+
+  if (currentPlayer === "A") {
+    arrow.style.fill = "#ff4444";
+    arrow.style.transform = "rotate(180deg)";
+  } else {
+    arrow.style.fill = "#00ff99";
+    arrow.style.transform = "rotate(0deg)";
+  }
+}
+
+let currentPlayer = "A"; // default
+
+function swapTurn() {
+  currentPlayer = currentPlayer === "A" ? "B" : "A";
+  updateArrow();
+}
+
+
+
+    function updateDisplay(player) {
+  const p = players[player];
+
+  let text = "-";
+
+  if (p.selected !== null) {
+    text = p.selected.toString();
+    if (p.multiplier !== 1) text += ` x ${p.multiplier}`;
+  }
+
+  document.getElementById("current" + player).textContent =
+    `${text} | Turns: ${p.turns}`;
+}
+
+
+    function undoScore(player) {
+  const p = players[player];
+
+  if (p.history.length === 0) {
+    alert("Nothing to undo");
+    return;
+  }
+
+  p.turns--;
+if (p.turns < 0) p.turns = 0;
+
+
+  const last = p.history.pop();
+  p.score -= last;
+
+  if (p.score < 0) p.score = 0;
+
+  document.getElementById("score" + player).textContent = p.score;
+  swapTurn();
+}
+
+
+
+function openSettings() {
+  const panel = document.getElementById("settingsPanel");
+  panel.style.display = panel.style.display === "block" ? "none" : "block";
+}
+
+
+function applyGameMode() {
+  const selected = document.querySelector('input[name="mode"]:checked').value;
+
+  if (selected === "none") {
+    gameMode = "none";
+    targetScore = 0;
+  }
+
+  if (selected === "101" || selected === "301" || selected === "501") {
+    gameMode = "x01";
+    targetScore = parseInt(selected);
+  }
+
+  if (selected === "f100") {
+    gameMode = "first";
+    targetScore = 100;
+  }
+  if (selected === "f200") {
+    gameMode = "first";
+    targetScore = 200;
+  }
+  if (selected === "f500") {
+    gameMode = "first";
+    targetScore = 500;
+  }
+
+  // Set starting scores
+  if (gameMode === "x01") {
+    players.A.score = targetScore;
+    players.B.score = targetScore;
+  } else {
+    players.A.score = 0;
+    players.B.score = 0;
+  }
+
+  players.A.history = [];
+  players.B.history = [];
+  players.A.turns = 0;
+  players.B.turns = 0;
+
+  document.getElementById("scoreA").textContent = players.A.score;
+  document.getElementById("scoreB").textContent = players.B.score;
+
+  document.getElementById("settingsPanel").style.display = "none";
+
+const label = document.getElementById("modeLabel");
+label.textContent =
+  selected === "none" ? "Mode: Not selected" :
+  gameMode === "x01" ? `Mode: ${targetScore}` :
+  `Mode: First to ${targetScore}`;
+
+
+}
+
+const svg = document.getElementById("dartboard");
+const centre = 210;
+const numbers = [
+  20, 1, 18, 4, 13, 6, 10, 15, 2, 17,
+  3, 19, 7, 16, 8, 11, 14, 9, 12, 5
+];
+
+const radii = {
+  board: 200,
+  doubleOuter: 190,
+  doubleInner: 170,
+  tripleOuter: 115,
+  tripleInner: 95,
+  bull: 30,
+  bullseye: 12
+};
+
+let selected = { value: 0, element: null };
+
+// Convert polar to cartesian
+function polarToCartesian(cx, cy, r, angle) {
+  const rad = (angle - 90) * Math.PI / 180;
+  return {
+    x: cx + r * Math.cos(rad),
+    y: cy + r * Math.sin(rad)
+  };
+}
+
+// Create segment path
+function createSegment(cx, cy, r1, r2, startAngle, endAngle) {
+  const p1 = polarToCartesian(cx, cy, r1, endAngle);
+  const p2 = polarToCartesian(cx, cy, r1, startAngle);
+  const p3 = polarToCartesian(cx, cy, r2, startAngle);
+  const p4 = polarToCartesian(cx, cy, r2, endAngle);
+
+  return `
+    M ${p1.x} ${p1.y}
+    A ${r1} ${r1} 0 0 0 ${p2.x} ${p2.y}
+    L ${p3.x} ${p3.y}
+    A ${r2} ${r2} 0 0 1 ${p4.x} ${p4.y}
+    Z
+  `;
+}
+
+function updateModeLabel() {
+  const label = document.getElementById("modeLabel");
+  if (gameMode === "none") label.textContent = "Mode: Not selected";
+  else if (gameMode === "x01") label.textContent = `Mode: ${targetScore}`;
+  else if (gameMode === "first") label.textContent = `Mode: First to ${targetScore}`;
+}
+
+
+// Highlight function
+function highlightSegment(el, value) {
+  if (selected.element) {
+    selected.element.setAttribute("data-default", selected.element.getAttribute("fill"));
+    selected.element.setAttribute(
+      "fill",
+      selected.element.getAttribute("data-default")
+    );
+  }
+
+  const defaultFill = el.getAttribute("fill");
+  el.setAttribute("data-default", defaultFill);
+  el.setAttribute("fill", "yellow");
+
+  selected = { value, element: el };
+  document.getElementById("selectedValue").textContent = value;
+}
+
+// DRAW RINGS
+numbers.forEach((num, i) => {
+  const angleStart = i * 18;
+  const angleEnd = (i + 1) * 18;
+
+  const isEven = i % 2 === 0;
+
+  const singleColor = isEven ? "black" : "white";
+  const multiColor = isEven ? "red" : "green";
+
+  // SINGLE OUTER
+  const singleOuter = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  singleOuter.setAttribute("d", createSegment(210, 210, radii.doubleInner, radii.tripleOuter, angleStart, angleEnd));
+  singleOuter.setAttribute("fill", singleColor);
+  singleOuter.addEventListener("click", () => highlightSegment(singleOuter, num));
+  svg.appendChild(singleOuter);
+
+  // TRIPLE
+  const triple = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  triple.setAttribute("d", createSegment(210, 210, radii.tripleOuter, radii.tripleInner, angleStart, angleEnd));
+  triple.setAttribute("fill", multiColor);
+  triple.addEventListener("click", () => highlightSegment(triple, num * 3));
+  svg.appendChild(triple);
+
+  // SINGLE INNER
+  const singleInner = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  singleInner.setAttribute("d", createSegment(210, 210, radii.tripleInner, radii.bull, angleStart, angleEnd));
+  singleInner.setAttribute("fill", singleColor);
+  singleInner.addEventListener("click", () => highlightSegment(singleInner, num));
+  svg.appendChild(singleInner);
+
+  // DOUBLE
+  const double = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  double.setAttribute("d", createSegment(210, 210, radii.board, radii.doubleOuter, angleStart, angleEnd));
+  double.setAttribute("fill", multiColor);
+  double.addEventListener("click", () => highlightSegment(double, num * 2));
+  svg.appendChild(double);
+});
+
+// BULL
+const bull = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+bull.setAttribute("cx", 210);
+bull.setAttribute("cy", 210);
+bull.setAttribute("r", radii.bull);
+bull.setAttribute("fill", "green");
+bull.addEventListener("click", () => highlightSegment(bull, 25));
+svg.appendChild(bull);
+
+// BULLSEYE
+const bullseye = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+bullseye.setAttribute("cx", 210);
+bullseye.setAttribute("cy", 210);
+bullseye.setAttribute("r", radii.bullseye);
+bullseye.setAttribute("fill", "red");
+bullseye.addEventListener("click", () => highlightSegment(bullseye, 50));
+svg.appendChild(bullseye);
+
+// NUMBER LABELS
+numbers.forEach((num, i) => {
+  const angle = (i * 18) + 9;
+  const pos = polarToCartesian(210, 210, 205, angle);
+
+  const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  text.setAttribute("x", pos.x);
+  text.setAttribute("y", pos.y);
+  text.setAttribute("fill", "white");
+  text.setAttribute("font-size", "16");
+  text.setAttribute("text-anchor", "middle");
+  text.setAttribute("dominant-baseline", "middle");
+
+  text.textContent = num;
+  text.addEventListener("click", () => highlightSegment(text, 0));
+
+  svg.appendChild(text);
+});
+
+
+
+
+
+function showWin(player) {
+  const overlay = document.getElementById("winOverlay");
+  const box = document.getElementById("winBox");
+  const text = document.getElementById("winText");
+
+  const name = document.querySelectorAll(".player input")[player === "A" ? 0 : 1].value;
+
+  text.textContent = `${name} Wins!`;
+
+  if (player === "A") {
+    box.style.borderColor = "#ff4444";
+    text.style.color = "#ff4444";
+  } else {
+    box.style.borderColor = "#00ff99";
+    text.style.color = "#00ff99";
+  }
+
+  overlay.style.display = "flex";
+}
+
+function closeWin() {
+  document.getElementById("winOverlay").style.display = "none";
+}
+
+
+function setView(mode) {
+  const container = document.querySelector(".container");
+
+  if (mode === "buttons") {
+    container.classList.remove("board-mode");
+    document.body.classList.remove("board-mode");
+
+    document.querySelectorAll(".buttons").forEach(group => {
+      group.style.display = "grid";
+    });
+
+  } else if (mode === "board") {
+    container.classList.add("board-mode");
+    document.body.classList.add("board-mode");
+
+    document.querySelectorAll(".buttons").forEach(group => {
+      group.style.display = "none";
+    });
+  }
+}
+
+
+
+
+
+    function confirmScore(player) {
+  const p = players[player];
+
+  if (p.selected === null) {
+    alert("Please pick a number first!");
+    return;
+  }
+
+  const value = p.selected * p.multiplier;
+
+  p.turns++;
+
+  if (gameMode === "x01") {
+    p.score -= value;
+    p.history.push(-value);
+  } else {
+    p.score += value;
+    p.history.push(value);
+  }
+
+  if (p.score < 0) p.score = 0;
+
+  document.getElementById("score" + player).textContent = p.score;
+
+  if (gameMode === "x01" && p.score === 0) {
+  setTimeout(() => showWin(player), 100);
+}
+
+if (gameMode === "first" && p.score >= targetScore) {
+  setTimeout(() => showWin(player), 100);
+}
+
+
+  // Reset selection
+  p.selected = 0;
+  p.multiplier = 1;
+
+  const buttons = document
+    .getElementById("buttons" + player)
+    .querySelectorAll("button");
+
+  buttons.forEach(b => b.classList.remove("selected"));
+
+  updateDisplay(player);
+
+  swapTurn();
+}
+
+    createButtons("A");
+    createButtons("B");
+
+    // Set arrow correctly on page load
+const arrow = document.getElementById("turnArrow");
+arrow.style.fill = "#ff4444";
+arrow.style.transform = "rotate(180deg)";
+
+
+  updateArrow(); // force correct arrow on page load
+
+  </script>
+
+
+<footer>
+  v1.0.0 | Darts Tracker by JayDev Games ©2025
+</footer>
+
+
+</body>
+</html>
